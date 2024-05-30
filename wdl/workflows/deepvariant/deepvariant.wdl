@@ -147,7 +147,7 @@ task deepvariant_make_examples {
 	}
 
 	runtime {
-		docker: "gcr.io/deepvariant-docker/deepvariant:~{deepvariant_version}"
+		docker: "~{runtime_attributes.container_registry}/deepvariant:~{deepvariant_version}"
 		cpu: tasks_per_shard
 		memory: mem_gb + " GB"
 		disk: disk_size + " GB"
@@ -198,7 +198,7 @@ task deepvariant_call_variants {
 	}
 
 	runtime {
-		docker: "gcr.io/deepvariant-docker/deepvariant:~{deepvariant_version}"
+		docker: "~{runtime_attributes.container_registry}/deepvariant:~{deepvariant_version}"
 		cpu: total_deepvariant_tasks
 		memory: mem_gb + " GB"
 		disk: disk_size + " GB"
@@ -255,7 +255,7 @@ task deepvariant_postprocess_variants {
 	}
 
 	runtime {
-		docker: "gcr.io/deepvariant-docker/deepvariant:~{deepvariant_version}"
+		docker: "~{runtime_attributes.container_registry}/deepvariant:~{deepvariant_version}"
 		cpu: 2
 		memory: "32 GB"
 		disk: disk_size + " GB"

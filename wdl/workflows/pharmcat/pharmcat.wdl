@@ -162,7 +162,7 @@ task pharmcat_preprocess {
 	}
 
 	runtime {
-		docker: "pgkb/pharmcat:2.3.0"
+		docker: "~{runtime_attributes.container_registry}/pharmcat:2.3.0"
 		cpu: 2
 		memory: "4 GB"
 		disk: disk_size + " GB"
@@ -257,7 +257,7 @@ task run_pharmcat {
 	}
 
 	runtime {
-		docker: "pgkb/pharmcat:2.3.0"
+		docker: "~{runtime_attributes.container_registry}/pharmcat:2.3.0"
 		cpu: 2
 		memory: "4 GB"
 		disk: disk_size + " GB"
