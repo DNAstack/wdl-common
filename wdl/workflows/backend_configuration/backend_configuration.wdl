@@ -59,7 +59,6 @@ workflow backend_configuration {
 	}
 
 	if (backend == "AWS") {
-		# zones must be defined
 		# aws_spot_queue_arn must be defined if preemptible is set to true and engine is not miniwdl
 		# aws_on_demand_queue_arn must be defined if preemptible is set to false and engine is not miniwdl
 		# Using miniwdl engine, the queue ARN of the context the workflow has been submitted to will be used;
@@ -70,7 +69,7 @@ workflow backend_configuration {
 		RuntimeAttributes aws_spot_runtime_attributes = {
 			"preemptible_tries": 3,
 			"max_retries": 3,
-			"zones": select_first([zones]),
+			"zones": select_first([zones, ""]),
 			"queue_arn": select_first([aws_spot_queue_arn, ""]),
 			"container_registry": container_registry
 		}
@@ -78,7 +77,7 @@ workflow backend_configuration {
 		RuntimeAttributes aws_on_demand_runtime_attributes = {
 			"preemptible_tries": 0,
 			"max_retries": 0,
-			"zones": select_first([zones]),
+			"zones": select_first([zones, ""]),
 			"queue_arn": select_first([aws_on_demand_queue_arn, ""]),
 			"container_registry": container_registry
 		}
