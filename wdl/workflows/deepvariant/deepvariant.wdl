@@ -14,6 +14,7 @@ workflow deepvariant {
 
 		String deepvariant_version
 		DeepVariantModel? deepvariant_model
+		String backend
 
 		RuntimeAttributes default_runtime_attributes
 	}
@@ -26,6 +27,8 @@ workflow deepvariant {
 	Int total_deepvariant_tasks = 64
 	Int num_shards = 8
 	Int tasks_per_shard = total_deepvariant_tasks / num_shards
+
+	String docker_image = (if (backend == "AWS") then default_runtime_attributes.container_registry else "google") + "/deepvariant:~{deepvariant_version}"
 
 	scatter (shard_index in range(num_shards)) {
 		Int task_start_index = shard_index * tasks_per_shard
@@ -41,6 +44,7 @@ workflow deepvariant {
 				tasks_per_shard = tasks_per_shard,
 				total_deepvariant_tasks = total_deepvariant_tasks,
 				deepvariant_version = deepvariant_version,
+				docker_image = docker_image,
 				runtime_attributes = default_runtime_attributes
 		}
 	}
@@ -53,6 +57,7 @@ workflow deepvariant {
 			deepvariant_model = deepvariant_model,
 			total_deepvariant_tasks = total_deepvariant_tasks,
 			deepvariant_version = deepvariant_version,
+			docker_image = docker_image,
 			runtime_attributes = default_runtime_attributes
 	}
 
@@ -66,6 +71,7 @@ workflow deepvariant {
 			reference_name = reference_name,
 			total_deepvariant_tasks = total_deepvariant_tasks,
 			deepvariant_version = deepvariant_version,
+			docker_image = docker_image,
 			runtime_attributes = default_runtime_attributes
 	}
 
@@ -80,6 +86,7 @@ workflow deepvariant {
 		reference: {help: "Reference genome data"}
 		deepvariant_version: {help: "Version of deepvariant to use"}
 		deepvariant_model: {help: "Optional deepvariant model file to use"}
+		docker_image: {help: "Docker image to use based on backend selected"}
 		default_runtime_attributes: {help: "Default RuntimeAttributes; spot if preemptible was set to true, otherwise on_demand"}
 	}
 }
@@ -98,6 +105,7 @@ task deepvariant_make_examples {
 
 		Int total_deepvariant_tasks
 		String deepvariant_version
+		String docker_image
 
 		RuntimeAttributes runtime_attributes
 	}
@@ -147,7 +155,7 @@ task deepvariant_make_examples {
 	}
 
 	runtime {
-		docker: "~{runtime_attributes.container_registry}/deepvariant:~{deepvariant_version}"
+		docker: docker_image
 		cpu: tasks_per_shard
 		memory: mem_gb + " GB"
 		disk: disk_size + " GB"
@@ -169,6 +177,7 @@ task deepvariant_call_variants {
 		DeepVariantModel? deepvariant_model
 		Int total_deepvariant_tasks
 		String deepvariant_version
+		String docker_image
 
 		RuntimeAttributes runtime_attributes
 	}
@@ -198,7 +207,7 @@ task deepvariant_call_variants {
 	}
 
 	runtime {
-		docker: "~{runtime_attributes.container_registry}/deepvariant:~{deepvariant_version}"
+		docker: docker_image
 		cpu: total_deepvariant_tasks
 		memory: mem_gb + " GB"
 		disk: disk_size + " GB"
@@ -223,6 +232,7 @@ task deepvariant_postprocess_variants {
 
 		Int total_deepvariant_tasks
 		String deepvariant_version
+		String docker_image
 
 		RuntimeAttributes runtime_attributes
 	}
@@ -255,7 +265,7 @@ task deepvariant_postprocess_variants {
 	}
 
 	runtime {
-		docker: "~{runtime_attributes.container_registry}/deepvariant:~{deepvariant_version}"
+		docker: docker_image
 		cpu: 2
 		memory: "32 GB"
 		disk: disk_size + " GB"
