@@ -83,21 +83,37 @@ task pbmm2_align_wgs {
 
     samtools --version
 
-    ALIGNED=0
+    cat << EOF > detect_bam_tags.py
+    import json, pysam, sys
+    def check_bam_file(bam_file_path, n_records):
+      output = dict()
+      save = pysam.set_verbosity(0)  # suppress [E::idx_find_and_load]
+      with pysam.AlignmentFile(bam_file_path, "rb", check_sq=False) as bam_file:
+        pysam.set_verbosity(save)  # restore warnings
+        aligned = bool(bam_file.nreferences)
+        unique_tags = set()
+        for i, record in enumerate(bam_file):
+          if i >= n_records: break
+          unique_tags.update(tag[0] for tag in record.tags)
+      output["kinetics"] = bool(unique_tags & {"fi", "ri", "fp", "rp", "ip", "pw"})
+      output["base_modification"] = bool(unique_tags & {"MM", "ML", "Mm", "Ml"})
+      output["aligned"] = aligned
+      output["haplotagged"] = bool(unique_tags & {"HP", "PS", "PC"})
+      return output
+    print(json.dumps(check_bam_file(sys.argv[1], 10000), indent=2))
+    EOF
 
-    # is the BAM already aligned?
-    if (samtools view -H ~{bam} | grep "^@PG" | grep -qE "ID:(pbmm2|minimap2|ngmlr)"); then
+    read -r kinetics base_modification aligned <<< "$(python3 ./detect_bam_tags.py ~{bam} | jq '. | .kinetics, .base_modification, .aligned')"
+
+    if [ "${aligned}" = true ]; then
       echo "Input ~{basename(bam)} is already aligned.  Alignments and and haplotype tags will be stripped."
-      ALIGNED=1
     fi
 
-    # does the BAM contain basemod tags?
-    if ! (samtools view ~{bam} | head -n 50 | cut -f12- | grep -qE "MM:|Mm:|ML:|Ml:"); then
+    if [ "${base_modification}" = false ]; then
       echo "Input ~{basename(bam)} does not contain base modification tags.  5mCpG pileups will not be generated."
     fi
 
-    # does the BAM contain kinetics tags?
-    if (samtools view ~{bam} | head -n 50 | cut -f12- | grep -qE "fi:|fp:|ri:|rp:"); then
+    if [ "${kinetics}" = true ]; then
       echo "Input ~{basename(bam)} contains consensus kinetics tags."
       if [ "~{strip_kinetics}" = true ]; then
         echo "Kinetics will be stripped from the output."
@@ -119,16 +135,16 @@ task pbmm2_align_wgs {
       ~{bam} \
       aligned.bam
 
-    if [ "$ALIGNED" -eq 1 ]; then
+    if [ "${aligned}" = true ]; then
       # remove haplotype tags
       samtools view \
         ~{if threads > 1 then "--threads " + (threads - 1) else ""} \
         --bam --no-PG \
-        --remove-tag HP,PS,PC,SA \
+        --remove-tag HP,PS,PC \
         -o ~{sample_id}.~{movie}.~{ref_name}.aligned.bam \
-        aligned.bam && \
-          rm aligned.bam && \
-          rm aligned.bam.bai
+        aligned.bam \
+      && rm aligned.bam \
+      && rm aligned.bam.bai
       samtools index \
         ~{if threads > 1 then "-@ " + (threads - 1) else ""} \
         ~{sample_id}.~{movie}.~{ref_name}.aligned.bam
@@ -137,7 +153,7 @@ task pbmm2_align_wgs {
       mv --verbose aligned.bam.bai ~{sample_id}.~{movie}.~{ref_name}.aligned.bam.bai
     fi
 
-    wait ${BAM_STATS_PID}
+    wait "${BAM_STATS_PID}"
   >>>
 
   output {
