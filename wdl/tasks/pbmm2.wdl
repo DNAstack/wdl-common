@@ -126,9 +126,9 @@ task pbmm2_align_wgs {
         --bam --no-PG \
         --remove-tag HP,PS,PC,SA \
         -o ~{sample_id}.~{movie}.~{ref_name}.aligned.bam \
-        aligned.bam &&
-          \ rm aligned.bam &&
-          \ rm aligned.bam.bai
+        aligned.bam && \
+          rm aligned.bam && \
+          rm aligned.bam.bai
       samtools index \
         ~{if threads > 1 then "-@ " + (threads - 1) else ""} \
         ~{sample_id}.~{movie}.~{ref_name}.aligned.bam
