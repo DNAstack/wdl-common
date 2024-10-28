@@ -103,7 +103,7 @@ task pbmm2_align_wgs {
     print(json.dumps(check_bam_file(sys.argv[1], 10000), indent=2))
     EOF
 
-    read -r kinetics base_modification aligned <<< "$(python3 ./detect_bam_tags.py ~{bam} | jq '. | .kinetics, .base_modification, .aligned')"
+    read -r kinetics base_modification aligned <<< "$(python3 ./detect_bam_tags.py ~{bam} | jq -r '[.kinetics, .base_modification, .aligned] | @tsv')"
 
     if [ "${aligned}" = true ]; then
       echo "Input ~{basename(bam)} is already aligned.  Alignments and and haplotype tags will be stripped."
