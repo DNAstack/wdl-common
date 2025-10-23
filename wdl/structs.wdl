@@ -18,6 +18,9 @@ struct RuntimeAttributes {
   # and if the namespace is not specified, HealthOmics will have permissions issues
   String? container_namespace  # Namespace within AWS ECR for HealthOmics
 
-  # Memory override parameter
-  Int? mem_gb
+  # Memory override parameters
+  Int? hiphase_override_mem_gb
+  Int? merge_bam_stats_override_mem_gb
+  Int? pbmm2_align_wgs_override_mem_gb
+  Int? pbstarphase_diplotype_override_mem_gb
 }
