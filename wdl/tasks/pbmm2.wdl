@@ -69,11 +69,14 @@ task pbmm2_align_wgs {
     bamin = pysam.AlignmentFile('~{bam}', check_sq=False)
     pysam.set_verbosity(save)  # restore warnings
     for b in bamin:
-      errorrate = 1.0 - b.get_tag('rq')
-      if math.isnan(b.get_tag('rq')):
-        print(f'Warning: read {b.query_name} has tag rq:f:nan.', file=sys.stderr)
-        continue
-      readqv = MAX_QV if errorrate == 0 else math.floor(-10 * math.log10(errorrate))
+      if b.has_tag('rq'):  # get read quality from "rq" BAM tag if available
+        errorrate = 1.0 - b.get_tag('rq')
+        if math.isnan(b.get_tag('rq')):
+          print(f'Warning: read {b.query_name} has tag rq:f:nan.', file=sys.stderr)
+          continue
+        readqv = MAX_QV if errorrate == 0 else math.floor(-10 * math.log10(errorrate))
+      else:
+        readqv = math.nan
       print(f"{b.query_name.split('/')[0]}\t{b.query_name}\t{len(b.query_sequence)}\t{readqv}")
     bamin.close()
     EOF
@@ -161,7 +164,7 @@ task pbmm2_align_wgs {
   }
 
   runtime {
-    docker: "~{runtime_attributes.container_registry}/pbmm2@sha256:24218cb5cbc68d1fd64db14a9dc38263d3d931c74aca872c998d12ef43020ef0"
+    docker: "~{runtime_attributes.container_registry}/pbmm2@sha256:b58eef0645dd9adca850c9b4811f289ddcd57f630596d9f524701bc787467f30"
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"

@@ -35,7 +35,7 @@ task pbsv_discover {
   }
 
   Int threads   = 2
-  Int mem_gb    = 10
+  Int mem_gb    = 16
   Int disk_size = ceil((size(aligned_bam, "GB") + size(trf_bed, "GB")) * 2 + 20)
 
   String out_prefix = basename(aligned_bam, ".bam")
@@ -149,7 +149,7 @@ task pbsv_call {
     # This is brittle and likely to break if pbsv discover changes output format.
     # Build a pattern to match; we want headers (e.g., '^#') and signature
     #   records where third column matches the chromosome (e.g., '^.\t.\tchr1\t').
-      pattern=$(echo ~{sep=" " select_first([regions])} \
+      pattern=$(echo ~{sep=" " select_first([regions, []])} \
         | sed 's/^/^.\\t.\\t/; s/ /\\t\|^.\\t.\\t/g; s/$/\\t/' \
         | echo "^#|""$(</dev/stdin)")
 
