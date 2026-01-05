@@ -17,6 +17,9 @@ task pbsv_discover {
     trf_bed: {
       name: "Tandem repeat BED used to normalize representation of variation within tandem repeats"
     }
+    pbsv_discover_override_mem_gb: {
+      name: "Memory Allocation Override GB"
+    }
     runtime_attributes: {
       name: "Runtime attribute structure"
     }
@@ -31,11 +34,13 @@ task pbsv_discover {
 
     File? trf_bed
 
+    Int? pbsv_discover_override_mem_gb
+
     RuntimeAttributes runtime_attributes
   }
 
   Int threads   = 2
-  Int mem_gb    = 16
+  Int mem_gb    = select_first([pbsv_discover_override_mem_gb, 16])
   Int disk_size = ceil((size(aligned_bam, "GB") + size(trf_bed, "GB")) * 2 + 20)
 
   String out_prefix = basename(aligned_bam, ".bam")
