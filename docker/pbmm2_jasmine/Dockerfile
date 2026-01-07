@@ -17,3 +17,12 @@ RUN wget https://github.com/PacificBiosciences/jasmine/releases/download/v${JASM
     chown root:root /usr/local/bin/jasmine && \
     chown root:root /usr/local/lib/libonnxruntime.so.* && \
     chmod +x /usr/local/bin/jasmine
+
+# Install detect_duplicate_rgs package and run tests
+COPY detect_duplicate_rgs/ /opt/detect_duplicate_rgs/
+RUN python3 -m pip install --quiet pytest /opt/detect_duplicate_rgs/ && \
+    pytest /opt/detect_duplicate_rgs/tests/ -v && \
+    rm -rf \
+        /opt/detect_duplicate_rgs/tests/__pycache__/ \
+        /opt/detect_duplicate_rgs/.pytest_cache/ \
+        /opt/detect_duplicate_rgs/*.egg-info/

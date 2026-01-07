@@ -58,7 +58,7 @@ task pbmm2_align_wgs {
     RuntimeAttributes runtime_attributes
   }
 
-  String bam_basename = basename(bam, ".bam") + ".kinetics_stripped.bam"
+  String bam_basename = basename(bam, ".bam")
   Int threads   = 24
   Int mem_gb    = select_first([pbmm2_align_wgs_override_mem_gb, ceil(threads * 4)])
   Int disk_size = ceil(size(bam, "GB") * 4 + size(ref_fasta, "GB") + 70)
@@ -68,13 +68,13 @@ task pbmm2_align_wgs {
   # jasmine is not part of standard quay.io/pacbio container images
   # a custom image was created using pbmm2 as the base and adding
   # required tools (i.e. jasmine)
-  String pbmm2_jasmine_docker_image = (if (runtime_attributes.backend == "AWS-HealthOmics") then runtime_attributes.container_registry + "/" else "dnastack/") + "pbmm2_jasmine:1.16.99_2.4.0"
+  String pbmm2_jasmine_docker_image = (if (runtime_attributes.backend == "AWS-HealthOmics") then runtime_attributes.container_registry + "/" else "dnastack/") + "pbmm2_jasmine:1.16.99_2.4.0_0.0.1"
 
   command <<<
     set -euo pipefail
 
     cat << EOF > extract_read_length_and_qual.py
-    import math, pysam
+    import math, pysam, sys
     MAX_QV = 60
     save = pysam.set_verbosity(0)  # suppress [E::idx_find_and_load]
     bamin = pysam.AlignmentFile('~{bam}', check_sq=False)
@@ -119,7 +119,7 @@ task pbmm2_align_wgs {
     read -r kinetics base_modification aligned haplotagged <<< "$(python3 ./detect_bam_tags.py | jq -r '. | [.kinetics, .base_modification, .aligned, .haplotagged] | @tsv')"
 
     if [ "$aligned" = true ]; then
-      echo "Input ~{basename(bam)} is already aligned.  Alignments and and haplotype tags will be stripped."
+      echo "Input ~{basename(bam)} is already aligned.  Alignments and haplotype tags will be stripped."
     fi
 
     if [ "$base_modification" = false ]; then
@@ -133,7 +133,7 @@ task pbmm2_align_wgs {
       fi
     fi
 
-    current_bam="~{bam}" 
+    current_bam="~{bam}"
     jasmine --version
     if [ "$kinetics" = true ] && [ "$base_modification" = false ]; then
       echo "Input ~{basename(bam)} contains consensus kinetics tags and no base modification tags.  Running Jasmine."
@@ -142,9 +142,50 @@ task pbmm2_align_wgs {
         ~{bam_basename}.kinetics_stripped.bam && \
       current_bam="~{bam_basename}.kinetics_stripped.bam"
     else
-      echo "Input ~{basename(bam)} does not containg kinetics tags, skipping Jasmine"
+      echo "Input ~{basename(bam)} does not contain kinetics tags, skipping Jasmine"
       echo ""
     fi
+
+    # Try to detect duplicated RGs that resulted from merging chunked BAMs - these yield invalid IDs (suffixed with -HASH) if the RGs are not properly combined
+    rc=0
+    base_id=$(detect_duplicate_rgs --input-bam "${current_bam}" --fixed-header header.no_duplicate_rgs.sam) || rc=$?
+    case "${rc}" in
+      0)
+        echo "BAM is well formatted & does not have duplicate RGs, continuing"
+        ;;
+      1)
+        echo "Duplicate suffixed RGs detected! This is likely the result of a bad merge on chunked alignments of the same movie BAM."
+        echo "Did not detect any RGs other than the duplicate identical RGs; will attempt to repair BAM by setting all RGs to [${base_id}]"
+        echo "RGs prior to fix:"
+        samtools view -H "${current_bam}" | grep -E "^@RG" | cut -f 2
+        echo
+
+        # Set all RGs to the base ID, remove duplicated suffixed RGs
+        duplicate_ids_removed_bam="~{bam_basename}.duplicate_ids_removed.bam"
+        samtools addreplacerg \
+          -m overwrite_all \
+          -R "${base_id}" \
+          -@ ~{threads - 2} \
+          --output-fmt BAM \
+          "${current_bam}" \
+        | samtools reheader \
+                header.no_duplicate_rgs.sam \
+                - \
+        > "${duplicate_ids_removed_bam}"
+
+        current_bam="${duplicate_ids_removed_bam}"
+
+        echo "BAM RGs repaired successfully!"
+        echo "RGs following fix:"
+        samtools view -H "${current_bam}" | grep -E "^@RG" | cut -f 2
+        echo
+        ;;
+      2)
+        echo "Duplicate suffixed RGs detected! This is likely the result of a bad merge on chunked alignments of the same movie BAM."
+        echo "Detected RGs other than the duplicate identical RGs, won't automatically set them all to [${base_id}] to avoid clobbering; a fix for this has not been implemented; please reach out to bioinformatics support"
+        exit 1
+        ;;
+    esac
 
     pbmm2 --version
 
