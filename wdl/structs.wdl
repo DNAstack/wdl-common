@@ -11,6 +11,7 @@ struct RuntimeAttributes {
   String zones
 
   String gpuType
+  String cpu_platform
 
   String container_registry
 

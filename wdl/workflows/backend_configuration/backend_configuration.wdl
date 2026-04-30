@@ -23,6 +23,10 @@ workflow backend_configuration {
     container_registry: {
       help: "Container registry to use"
     }
+    cpu_platform: {
+      help: "Optionally specify a specific cpu_platform to use; GCP only. Cascade and Sky Lake are n2 machines; the rest are n1.",
+      choices: ["Intel Ice Lake", "Intel Cascade Lake", "Intel Skylake", "Intel Broadwell", "Intel Haswell", "Intel Ivy Bridge", "Intel Sandy Bridge"]
+    }
   }
 
   input {
@@ -30,6 +34,7 @@ workflow backend_configuration {
     String? zones
     String? gpuType
     String? container_registry
+    String? cpu_platform
   }
 
   String default_container_registry = "quay.io/pacbio"
@@ -49,6 +54,7 @@ workflow backend_configuration {
       "max_retries": 0,
       "zones": select_first([zones]),
       "gpuType": select_first([gpuType, ""]),
+      "cpu_platform": select_first([cpu_platform, "Intel Sandy Bridge"]),
       "container_registry": select_first([container_registry, default_container_registry])
     }
 
@@ -58,6 +64,7 @@ workflow backend_configuration {
       "max_retries": 0,
       "zones": select_first([zones]),
       "gpuType": select_first([gpuType, ""]),
+      "cpu_platform": select_first([cpu_platform, "Intel Sandy Bridge"]),
       "container_registry": select_first([container_registry, default_container_registry])
     }
   }
@@ -73,6 +80,7 @@ workflow backend_configuration {
       "max_retries": 3,
       "zones": "",
       "gpuType": "",
+      "cpu_platform": "",
       "container_registry": select_first([container_registry, default_container_registry])
     }
 
@@ -82,6 +90,7 @@ workflow backend_configuration {
       "max_retries": 0,
       "zones": "",
       "gpuType": "",
+      "cpu_platform": "",
       "container_registry": select_first([container_registry, default_container_registry])
     }
   }
@@ -102,6 +111,7 @@ workflow backend_configuration {
       "max_retries": 0,
       "zones": "",
       "gpuType": select_first([gpuType, ""]),
+      "cpu_platform": "",
       "container_registry": select_first([container_registry])
     }
   }
@@ -115,6 +125,7 @@ workflow backend_configuration {
       "max_retries": 3,
       "zones": "",
       "gpuType": select_first([gpuType, ""]),
+      "cpu_platform": "",
       "container_registry": select_first([container_registry, default_container_registry])
     }
   }
