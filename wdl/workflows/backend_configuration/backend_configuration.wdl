@@ -54,7 +54,7 @@ workflow backend_configuration {
       "max_retries": 0,
       "zones": select_first([zones]),
       "gpuType": select_first([gpuType, ""]),
-      "cpu_platform": select_first([cpu_platform, "Intel Sandy Bridge"]),
+      "cpu_platform": select_first([cpu_platform, "Intel Cascade Lake"]),
       "container_registry": select_first([container_registry, default_container_registry])
     }
 
@@ -64,7 +64,7 @@ workflow backend_configuration {
       "max_retries": 0,
       "zones": select_first([zones]),
       "gpuType": select_first([gpuType, ""]),
-      "cpu_platform": select_first([cpu_platform, "Intel Sandy Bridge"]),
+      "cpu_platform": select_first([cpu_platform, "Intel Cascade Lake"]),
       "container_registry": select_first([container_registry, default_container_registry])
     }
   }
