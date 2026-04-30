@@ -116,5 +116,6 @@ task merge_bam_stats {
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries
     zones: runtime_attributes.zones
+    cpuPlatform: runtime_attributes.cpu_platform
   }
 }
