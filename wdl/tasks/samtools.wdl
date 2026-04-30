@@ -65,6 +65,7 @@ task samtools_merge {
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
     zones: runtime_attributes.zones
+    cpuPlatform: runtime_attributes.cpu_platform
   }
 }
 
@@ -122,6 +123,7 @@ task samtools_fasta {
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
     zones: runtime_attributes.zones
+    cpuPlatform: runtime_attributes.cpu_platform
   }
 }
 
@@ -190,5 +192,6 @@ task samtools_reset {
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries
     zones: runtime_attributes.zones
+    cpuPlatform: runtime_attributes.cpu_platform
   }
 }
