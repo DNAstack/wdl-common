@@ -90,7 +90,12 @@ task bcftools_stats_roh_small_variants {
     grep -w '^TSTV' ~{sample_id}.~{ref_name}.small_variants.vcf.stats.txt | cut -f5 > tstv_ratio.txt
     nHets=$(grep -w '^PSC' ~{sample_id}.~{ref_name}.small_variants.vcf.stats.txt | cut -f6)
     nNonRefHom=$(grep -w '^PSC' ~{sample_id}.~{ref_name}.small_variants.vcf.stats.txt | cut -f5)
-    printf %.2f "$((10**2 * nHets / nNonRefHom))e-2" > hethom_ratio.txt  # hack for low precision float without bc
+    # het/hom ratio is undefined when there are no non-ref homozygous sites (e.g. small panels)
+    if [[ -n "${nNonRefHom}" && "${nNonRefHom}" -gt 0 ]]; then
+      printf %.2f "$((10**2 * nHets / nNonRefHom))e-2" > hethom_ratio.txt  # hack for low precision float without bc
+    else
+      printf "NA" > hethom_ratio.txt
+    fi
 
     # plot SNVs by REF and ALT
     cat << EOF > plot_snvs.py
