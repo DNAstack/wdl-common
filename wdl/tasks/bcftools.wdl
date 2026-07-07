@@ -108,7 +108,12 @@ task bcftools_stats_roh_small_variants {
       ],
       ignore_index=True
     )
-    df = pd.pivot(df, index='ALT', columns='REF', values='count')
+    # A sample with no passing SNVs (e.g. a small target-enrichment panel) yields a header-only
+    # table, whose 'count' column reads as dtype object; coerce to numeric and fill absent
+    # REF/ALT cells with 0 so the pivot is a numeric matrix and the heatmap renders an all-zero
+    # plot instead of failing on an object/all-NaN matrix.
+    df['count'] = pd.to_numeric(df['count'], errors='coerce')
+    df = pd.pivot(df, index='ALT', columns='REF', values='count').fillna(0)
     sns.set_style('dark')
     mask = np.identity(df.shape[0], dtype=bool)
     fig, ax = plt.subplots(figsize=(8, 6))
