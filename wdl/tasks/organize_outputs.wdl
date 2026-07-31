@@ -9,7 +9,7 @@ task create_timestamp {
     RuntimeAttributes runtime_attributes
   }
 
-  String tools_docker_image = (if (runtime_attributes.backend == "AWS-HealthOmics") then runtime_attributes.container_registry + "/" else "dnastack/") + "hifi_solves_tools:2.1.2"
+  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
 
   command <<<
     set -euo pipefail
@@ -60,7 +60,7 @@ task organize_outputs {
   # Use the base SemVer of the workflow to write outputs
   # e.g. 1.12.0-11-2cdbd238 -> 1.12.0
   String workflow_version_semver = sub(workflow_version, "-.*$", "")
-  String tools_docker_image = (if (runtime_attributes.backend == "AWS-HealthOmics") then runtime_attributes.container_registry + "/" else "dnastack/") + "hifi_solves_tools:2.1.2"
+  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
 
   command <<<
     set -euo pipefail
@@ -129,7 +129,7 @@ task organize_per_sample_outputs {
   # Use the base SemVer of the workflow to write outputs
   # e.g. 1.12.0-11-2cdbd238 -> 1.12.0
   String workflow_version_semver = sub(workflow_version, "-.*$", "")
-  String tools_docker_image = (if (runtime_attributes.backend == "AWS-HealthOmics") then runtime_attributes.container_registry + "/" else "dnastack/") + "hifi_solves_tools:2.1.2"
+  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
 
   command <<<
     set -euo pipefail
