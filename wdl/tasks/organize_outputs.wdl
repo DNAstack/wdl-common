@@ -3,8 +3,6 @@ version 1.0
 import "../structs.wdl"
 
 task create_timestamp {
-  # Emit a single timestamp shared across the data and index upload passes so both
-  # write to the same timestamped bucket directory (keeping each index next to its data).
   input {
     RuntimeAttributes runtime_attributes
   }
@@ -35,10 +33,6 @@ task create_timestamp {
 }
 
 task organize_outputs {
-  # Upload one set of outputs (a data pass or an index pass) to the output bucket.
-  # upload_outputs.sh writes each file to <bucket>/<workflow>/<version>/<timestamp>/<identifier>/<key>/<basename>,
-  # so a data pass and an index pass that share the same keys, identifier, and timestamp land
-  # in the same per-key directory.
   input {
     String identifier
 
@@ -57,8 +51,6 @@ task organize_outputs {
 
   Int disk_size = 20
 
-  # Use the base SemVer of the workflow to write outputs
-  # e.g. 1.12.0-11-2cdbd238 -> 1.12.0
   String workflow_version_semver = sub(workflow_version, "-.*$", "")
   String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
 
@@ -98,15 +90,6 @@ task organize_outputs {
 }
 
 task organize_per_sample_outputs {
-  # Upload one file per sample, each under a key equal to its sample_id, so upload_outputs.sh
-  # writes it to <bucket>/<workflow>/<version>/<timestamp>/<identifier>/<sample_id>/<basename>
-  # (a per-sample directory). The per-sample-keyed JSON is assembled here from the parallel
-  # sample_ids / sample_files arrays because WDL 1.0 cannot build a map with dynamic keys for
-  # the caller; upload_outputs.sh itself is used unmodified.
-  #
-  # sample_files are cloud paths passed as String, NOT File: upload_outputs.sh copies them
-  # bucket-to-bucket, so localizing (downloading) them into this task is unnecessary and slow.
-  # Declaring them String means Cromwell never localizes them; only their cloud paths are needed.
   input {
     String identifier
 
@@ -126,8 +109,6 @@ task organize_per_sample_outputs {
 
   Int disk_size = 20
 
-  # Use the base SemVer of the workflow to write outputs
-  # e.g. 1.12.0-11-2cdbd238 -> 1.12.0
   String workflow_version_semver = sub(workflow_version, "-.*$", "")
   String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
 
