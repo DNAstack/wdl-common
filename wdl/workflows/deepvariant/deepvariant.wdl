@@ -29,6 +29,9 @@ workflow deepvariant {
     ref_name: {
       name: "Reference name"
     }
+    deepvariant_postprocess_variants_override_mem_gb: {
+      name: "DeepVariant postprocess variants override mem GB"
+    }
     deepvariant_version: {
       name: "DeepVariant Version"
     }
@@ -64,6 +67,8 @@ workflow deepvariant {
     File ref_fasta
     File ref_index
     String ref_name
+
+    Int? deepvariant_postprocess_variants_override_mem_gb
 
     String deepvariant_version
     File? custom_deepvariant_model_tar
@@ -133,6 +138,7 @@ workflow deepvariant {
       ref_fasta                     = ref_fasta,
       ref_index                     = ref_index,
       ref_name                      = ref_name,
+      deepvariant_postprocess_variants_override_mem_gb = deepvariant_postprocess_variants_override_mem_gb,
       total_deepvariant_tasks       = total_deepvariant_tasks,
       docker_image                  = docker_image,
       runtime_attributes            = default_runtime_attributes
@@ -497,6 +503,9 @@ task deepvariant_postprocess_variants {
     ref_name: {
       name: "Reference name"
     }
+    deepvariant_postprocess_variants_override_mem_gb: {
+      name: "DeepVariant postprocess variants override mem GB"
+    }
     total_deepvariant_tasks: {
       name: "Total DeepVariant tasks"
     }
@@ -529,6 +538,8 @@ task deepvariant_postprocess_variants {
     File ref_index
     String ref_name
 
+    Int? deepvariant_postprocess_variants_override_mem_gb
+
     Int total_deepvariant_tasks
     String docker_image
 
@@ -536,7 +547,7 @@ task deepvariant_postprocess_variants {
   }
 
   Int threads   = 2
-  Int mem_gb    = 72
+  Int mem_gb    = select_first([deepvariant_postprocess_variants_override_mem_gb, 72])
   Int disk_size = ceil((size(tfrecords_tar, "GB") + size(ref_fasta, "GB") + size(nonvariant_site_tfrecord_tars, "GB")) * 2 + 20)
 
   command <<<
