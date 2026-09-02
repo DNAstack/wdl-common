@@ -57,7 +57,7 @@ task paraphase {
   Int disk_size = ceil(size(aligned_bam, "GB") +size(ref_fasta, "GB") + 20)
 
   command <<<
-    set -euo pipefail
+    set -eu
 
     paraphase --version
 
@@ -65,7 +65,8 @@ task paraphase {
       --threads ~{threads} \
       --bam ~{aligned_bam} \
       --reference ~{ref_fasta} \
-      --out ./
+      --out ./ \
+      || echo "Paraphase failed for sample ~{sample_id}.  Check Paraphase logs for details."
 
     # tarball the VCFs if they exist
     if ls ~{sample_id}_paraphase_vcfs/*.vcf &> /dev/null; then
@@ -74,9 +75,9 @@ task paraphase {
   >>>
 
   output {
-    File  out_json  = "~{sample_id}.paraphase.json"
-    File  bam       = "~{sample_id}.paraphase.bam"
-    File  bam_index = "~{sample_id}.paraphase.bam.bai"
+    File?  out_json  = "~{sample_id}.paraphase.json"
+    File?  bam       = "~{sample_id}.paraphase.bam"
+    File?  bam_index = "~{sample_id}.paraphase.bam.bai"
     File? vcfs_tar  = "~{sample_id}.paraphase_vcfs.tar.gz"
   }
 
