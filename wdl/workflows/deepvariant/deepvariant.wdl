@@ -38,6 +38,10 @@ workflow deepvariant {
     custom_deepvariant_model_tar: {
       name: "Custom DeepVariant Model tar"
     }
+    max_reads_per_partition: {
+      name: "Max reads per partition",
+      help: "Maximum reads make_examples pulls into each partition, applied before downstream sampling. AD and DP are computed from the reads that survive this cap, so on data deeper than the cap the reported depth understates the true depth. 0 uses all reads. The 600 default pairs with partition_size 25000 and suits the ~30x PacBio WGS it was tuned for; raise it for high-depth targeted panels"
+    }
     gpu: {
       name: "Use GPU for DeepVariant call_variants"
     }
@@ -73,6 +77,8 @@ workflow deepvariant {
     String deepvariant_version
     File? custom_deepvariant_model_tar
 
+    Int max_reads_per_partition = 600
+
     Boolean gpu
 
     RuntimeAttributes default_runtime_attributes
@@ -95,6 +101,7 @@ workflow deepvariant {
         regions_bed             = regions_bed,
         ref_fasta               = ref_fasta,
         ref_index               = ref_index,
+        max_reads_per_partition = max_reads_per_partition,
         task_start_index        = task_start_index,
         tasks_per_shard         = tasks_per_shard,
         total_deepvariant_tasks = total_deepvariant_tasks,
@@ -176,6 +183,10 @@ task deepvariant_make_examples {
     ref_index: {
       name: "Reference FASTA index"
     }
+    max_reads_per_partition: {
+      name: "Max reads per partition",
+      help: "Maximum reads make_examples pulls into each partition, applied before downstream sampling. AD and DP are computed from the reads that survive this cap, so on data deeper than the cap the reported depth understates the true depth. 0 uses all reads. The 600 default pairs with partition_size 25000 and suits the ~30x PacBio WGS it was tuned for; raise it for high-depth targeted panels"
+    }
     task_start_index: {
       name: "Task start index"
     }
@@ -207,6 +218,8 @@ task deepvariant_make_examples {
 
     File ref_fasta
     File ref_index
+
+    Int max_reads_per_partition = 600
 
     Int task_start_index
     Int tasks_per_shard
@@ -240,7 +253,7 @@ task deepvariant_make_examples {
         --track_ref_reads \
         --phase_reads \
         --partition_size=25000 \
-        --max_reads_per_partition=600 \
+        --max_reads_per_partition=~{max_reads_per_partition} \
         --alt_aligned_pileup=diff_channels \
         --add_hp_channel \
         --sort_by_haplotypes \
