@@ -38,6 +38,10 @@ task hiphase {
     ref_index: {
       name: "Reference index"
     }
+    no_supplemental_joins: {
+      name: "Disable supplemental mapping phase block joins",
+      help: "When no read spans two adjacent variants, HiPhase falls back to supplemental mappings to join them into one phase block, which bridges coverage gaps such as reference gaps and homozygous deletions. One such mapping is enough. On a library where a read cannot legitimately reach outside its own amplicon, that fallback instead lets a chimeric read assert phase between unrelated loci. Set true to disable it. Defaults to false, matching HiPhase's own default"
+    }
     hiphase_override_mem_gb: {
       name: "Memory Allocation Override GB"
     }
@@ -94,6 +98,8 @@ task hiphase {
     File ref_fasta
     File ref_index
 
+    Boolean no_supplemental_joins = false
+
     Int? hiphase_override_mem_gb
 
     RuntimeAttributes runtime_attributes
@@ -117,7 +123,8 @@ task hiphase {
       --reference ~{ref_fasta} \
       --summary-file ~{sample_id}.~{ref_name}.hiphase.stats.tsv \
       --blocks-file ~{sample_id}.~{ref_name}.hiphase.blocks.tsv \
-      --haplotag-file ~{sample_id}.~{ref_name}.hiphase.haplotags.tsv
+      --haplotag-file ~{sample_id}.~{ref_name}.hiphase.haplotags.tsv \
+      ~{if no_supplemental_joins then "--no-supplemental-joins" else ""}
 
     gzip ~{sample_id}.~{ref_name}.hiphase.haplotags.tsv
 
