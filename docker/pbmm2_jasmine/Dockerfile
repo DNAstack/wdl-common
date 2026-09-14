@@ -26,3 +26,13 @@ RUN python3 -m pip install --quiet pytest /opt/detect_duplicate_rgs/ && \
         /opt/detect_duplicate_rgs/tests/__pycache__/ \
         /opt/detect_duplicate_rgs/.pytest_cache/ \
         /opt/detect_duplicate_rgs/*.egg-info/
+
+# pbmm2_align_wgs fixes the order of coordinate-tied reads by sorting on name
+# and then on coordinate, which is only correct while this image's samtools
+# coordinate sort remains stable. Fail the build rather than let a samtools
+# upgrade silently reintroduce non-deterministic variant calls.
+COPY tests/ /opt/pbmm2_jasmine_tests/
+RUN pytest /opt/pbmm2_jasmine_tests/ -v && \
+    rm -rf \
+        /opt/pbmm2_jasmine_tests/__pycache__/ \
+        /opt/pbmm2_jasmine_tests/.pytest_cache/

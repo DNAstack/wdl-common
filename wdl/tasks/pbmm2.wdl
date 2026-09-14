@@ -61,14 +61,14 @@ task pbmm2_align_wgs {
   String bam_basename = basename(bam, ".bam")
   Int threads   = 24
   Int mem_gb    = select_first([pbmm2_align_wgs_override_mem_gb, ceil(threads * 4)])
-  Int disk_size = ceil(size(bam, "GB") * 4 + size(ref_fasta, "GB") + 70)
+  Int disk_size = ceil(size(bam, "GB") * 7 + size(ref_fasta, "GB") + 70)
 
   String movie = basename(bam, ".bam")
 
   # jasmine is not part of standard quay.io/pacbio container images
   # a custom image was created using pbmm2 as the base and adding
   # required tools (i.e. jasmine)
-  String pbmm2_jasmine_docker_image = (if (runtime_attributes.backend == "AWS-HealthOmics") then runtime_attributes.container_registry + "/" else "dnastack/") + "pbmm2_jasmine:1.16.99_2.4.0_0.0.1"
+  String pbmm2_jasmine_docker_image = (if (runtime_attributes.backend == "AWS-HealthOmics") then runtime_attributes.container_registry + "/" else "dnastack/") + "pbmm2_jasmine:1.16.99_2.4.0_0.0.2"
 
   command <<<
     set -euo pipefail
@@ -201,6 +201,17 @@ task pbmm2_align_wgs {
       ~{ref_fasta} \
       ${current_bam} \
       aligned.bam
+
+    # pbmm2 emits reads sharing a start coordinate in nondeterministic order, and
+    # consumers break ties by encounter order: DeepVariant fills its pileup image
+    # by walking the BAM, and duplicate markers pick a representative that way. So
+    # the same input gave different calls. Coordinate sort is stable, so sorting by
+    # name first makes the tie order canonical. ASCII rather than natural ordering,
+    # because natural ignores leading zeros and so conflates distinct read names.
+    samtools sort -N -m 1G -@ ~{threads - 1} aligned.bam \
+    | samtools sort -m 1G -@ ~{threads - 1} -o canonical.bam -
+    mv --verbose canonical.bam aligned.bam
+    samtools index -@ ~{threads - 1} aligned.bam
 
     if [ "$haplotagged" = true ]; then
       # remove haplotype tags
