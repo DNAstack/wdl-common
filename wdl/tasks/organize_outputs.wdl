@@ -23,7 +23,7 @@ task create_timestamp {
     docker: tools_docker_image
     cpu: 2
     memory: "4 GB"
-    disks: "local-disk 15 HDD"
+    disks: "local-disk 15 SSD"
     disk: "15 GB"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
@@ -80,7 +80,7 @@ task organize_outputs {
     docker: tools_docker_image
     cpu: 2
     memory: "4 GB"
-    disks: "local-disk ~{disk_size} HDD"
+    disks: "local-disk ~{disk_size} SSD"
     disk: "~{disk_size} GB"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
@@ -143,7 +143,7 @@ task organize_per_sample_outputs {
     docker: tools_docker_image
     cpu: 2
     memory: "4 GB"
-    disks: "local-disk ~{disk_size} HDD"
+    disks: "local-disk ~{disk_size} SSD"
     disk: "~{disk_size} GB"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries

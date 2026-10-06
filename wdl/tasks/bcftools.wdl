@@ -231,7 +231,7 @@ task bcftools_stats_roh_small_variants {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -310,7 +310,7 @@ task concat_pbsv_vcf {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -400,7 +400,7 @@ task split_vcf_by_sample {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -471,7 +471,7 @@ task bcftools_merge {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -566,7 +566,7 @@ task sv_stats {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey

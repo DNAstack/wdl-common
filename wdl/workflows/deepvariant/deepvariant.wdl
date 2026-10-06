@@ -283,7 +283,7 @@ task deepvariant_make_examples {
     cpu: tasks_per_shard
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -380,7 +380,7 @@ task deepvariant_call_variants_cpu {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -477,7 +477,7 @@ task deepvariant_call_variants_gpu {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     bootDiskSizeGb: 30  # !UnknownRuntimeKey
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
@@ -612,7 +612,7 @@ task deepvariant_postprocess_variants {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
