@@ -145,7 +145,7 @@ task trgt {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -228,7 +228,7 @@ task trgt_merge {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
@@ -297,7 +297,7 @@ task coverage_dropouts {
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
-    disks: "local-disk " + disk_size + " HDD"
+    disks: "local-disk " + disk_size + " SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries

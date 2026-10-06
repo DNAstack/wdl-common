@@ -82,7 +82,7 @@ task read_pbsv_splits {
     cpu: threads
     memory: "~{mem_gb} GB"
     disk: "~{disk} GB"
-    disks: "local-disk ~{disk} HDD"
+    disks: "local-disk ~{disk} SSD"
     preemptible: runtime_attributes.preemptible_tries
     maxRetries: runtime_attributes.max_retries
     awsBatchRetryAttempts: runtime_attributes.max_retries  # !UnknownRuntimeKey
