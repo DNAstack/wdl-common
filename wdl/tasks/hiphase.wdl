@@ -106,7 +106,7 @@ task hiphase {
   }
 
   Int threads   = 16
-  Int mem_gb = select_first([hiphase_override_mem_gb, threads * 5])
+  Int mem_gb = select_first([hiphase_override_mem_gb, 96])
   Int disk_size = ceil(size(vcfs, "GB") + size(ref_fasta, "GB") + size(aligned_bam, "GB") * 2 + 20)
 
   command <<<
@@ -192,7 +192,7 @@ task hiphase {
 
     python3 get_mapping_stats.py < ~{sample_id}.~{ref_name}.haplotagged.bam \
     | gzip --stdout > ~{sample_id}.~{ref_name}.alignment_stats.tsv.gz
-    
+
     python3 plot_mapq.py ~{sample_id}.~{ref_name}.alignment_stats.tsv.gz
   >>>
 
@@ -213,7 +213,7 @@ task hiphase {
   }
 
   runtime {
-    docker: "~{runtime_attributes.container_registry}/hiphase@sha256:47fe7d42aea6b1b2e6d3c7401bc35a184464c3f647473d0525c00f3c968b40ad"
+    docker: "~{runtime_attributes.container_registry}/hiphase@sha256:41ebe22b55c66e2e78da2013f7fffaecc02a8b4e980400c3ea8d03c87330522e"  # 1.7.0_build2
     cpu: threads
     memory: mem_gb + " GB"
     disk: disk_size + " GB"
