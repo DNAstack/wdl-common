@@ -40,6 +40,10 @@ workflow deepvariant {
     deepvariant_postprocess_variants_override_mem_gb: {
       name: "DeepVariant postprocess variants override mem GB"
     }
+    exclude_uncalled_sites: {
+      name: "Exclude uncalled sites",
+      help: "If true (default), drop records with no called genotype from the VCF after postprocess_variants. Set false to keep every record postprocess_variants writes, e.g. for forced genotyping, where a no-call at a requested site is itself the answer; the VCF is then written exactly as postprocess_variants produced it"
+    }
     deepvariant_version: {
       name: "DeepVariant Version"
     }
@@ -83,6 +87,7 @@ workflow deepvariant {
     String ref_name
 
     Int? deepvariant_postprocess_variants_override_mem_gb
+    Boolean exclude_uncalled_sites = true
 
     String deepvariant_version
     File? custom_deepvariant_model_tar
@@ -158,6 +163,7 @@ workflow deepvariant {
       ref_index                     = ref_index,
       ref_name                      = ref_name,
       deepvariant_postprocess_variants_override_mem_gb = deepvariant_postprocess_variants_override_mem_gb,
+      exclude_uncalled_sites        = exclude_uncalled_sites,
       total_deepvariant_tasks       = total_deepvariant_tasks,
       docker_image                  = docker_image,
       runtime_attributes            = default_runtime_attributes
@@ -545,6 +551,10 @@ task deepvariant_postprocess_variants {
     deepvariant_postprocess_variants_override_mem_gb: {
       name: "DeepVariant postprocess variants override mem GB"
     }
+    exclude_uncalled_sites: {
+      name: "Exclude uncalled sites",
+      help: "If true (default), drop records with no called genotype from the VCF after postprocess_variants. Set false to keep every record postprocess_variants writes, e.g. for forced genotyping, where a no-call at a requested site is itself the answer; the VCF is then written exactly as postprocess_variants produced it"
+    }
     total_deepvariant_tasks: {
       name: "Total DeepVariant tasks"
     }
@@ -578,6 +588,7 @@ task deepvariant_postprocess_variants {
     String ref_name
 
     Int? deepvariant_postprocess_variants_override_mem_gb
+    Boolean exclude_uncalled_sites = true
 
     Int total_deepvariant_tasks
     String docker_image
@@ -610,15 +621,17 @@ task deepvariant_postprocess_variants {
       --nonvariant_site_tfrecord_path "nonvariant_site_tfrecords/~{sample_id}.gvcf.tfrecord@~{total_deepvariant_tasks}.gz" \
       --gvcf_outfile ~{sample_id}.~{ref_name}.small_variants.g.vcf.gz
 
-    # Filter for only PASS variants
-    bcftools view \
-    ~{if threads > 1 then "--threads " + (threads - 1) else ""} \
-    --exclude-uncalled \
-    --output-type z \
-    --output-file ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz \
-    ~{sample_id}.~{ref_name}.small_variants.vcf.gz
+    if [[ "~{exclude_uncalled_sites}" == "true" ]]; then
+      # Drop records with no called genotype
+      bcftools view \
+      ~{if threads > 1 then "--threads " + (threads - 1) else ""} \
+      --exclude-uncalled \
+      --output-type z \
+      --output-file ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz \
+      ~{sample_id}.~{ref_name}.small_variants.vcf.gz
 
-    mv --verbose ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz ~{sample_id}.~{ref_name}.small_variants.vcf.gz
+      mv --verbose ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz ~{sample_id}.~{ref_name}.small_variants.vcf.gz
+    fi
     bcftools index --tbi --force \
       ~{if threads > 1 then "--threads " + (threads - 1) else ""} \
       ~{sample_id}.~{ref_name}.small_variants.vcf.gz

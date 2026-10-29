@@ -5,6 +5,7 @@
   "deepvariant.regions_bed": "File? (optional)",
   "deepvariant.proposed_variants_vcf": "File? (optional)",
   "deepvariant.proposed_variants_vcf_index": "File? (optional)",
+  "deepvariant.exclude_uncalled_sites": "Boolean (optional, default = true)",
   "deepvariant.ref_fasta": "File",
   "deepvariant.ref_index": "File",
   "deepvariant.ref_name": "String",
