@@ -20,6 +20,14 @@ workflow deepvariant {
     regions_bed: {
       name: "Regions BED"
     }
+    proposed_variants_vcf: {
+      name: "Proposed variants VCF",
+      help: "Tabix-indexed VCF of variants to genotype. When set, make_examples genotypes exactly these alleles (vcf_candidate_importer) instead of discovering candidates; GTs in the file are ignored. Only proposed variants inside regions_bed, when one is given, are genotyped; any outside it produce no output record"
+    }
+    proposed_variants_vcf_index: {
+      name: "Proposed variants VCF index",
+      help: "Tabix index for proposed_variants_vcf; required when proposed_variants_vcf is set"
+    }
     ref_fasta: {
       name: "Reference FASTA"
     }
@@ -31,6 +39,10 @@ workflow deepvariant {
     }
     deepvariant_postprocess_variants_override_mem_gb: {
       name: "DeepVariant postprocess variants override mem GB"
+    }
+    exclude_uncalled_sites: {
+      name: "Exclude uncalled sites",
+      help: "If true (default), drop records with no called genotype from the VCF after postprocess_variants. Set false to keep every record postprocess_variants writes, e.g. for forced genotyping, where a no-call at a requested site is itself the answer; the VCF is then written exactly as postprocess_variants produced it"
     }
     deepvariant_version: {
       name: "DeepVariant Version"
@@ -67,12 +79,15 @@ workflow deepvariant {
     Array[File] aligned_bams
     Array[File] aligned_bam_indices
     File? regions_bed
+    File? proposed_variants_vcf
+    File? proposed_variants_vcf_index
 
     File ref_fasta
     File ref_index
     String ref_name
 
     Int? deepvariant_postprocess_variants_override_mem_gb
+    Boolean exclude_uncalled_sites = true
 
     String deepvariant_version
     File? custom_deepvariant_model_tar
@@ -95,18 +110,20 @@ workflow deepvariant {
 
     call deepvariant_make_examples {
       input:
-        sample_id               = sample_id,
-        aligned_bams            = aligned_bams,
-        aligned_bam_indices     = aligned_bam_indices,
-        regions_bed             = regions_bed,
-        ref_fasta               = ref_fasta,
-        ref_index               = ref_index,
-        max_reads_per_partition = max_reads_per_partition,
-        task_start_index        = task_start_index,
-        tasks_per_shard         = tasks_per_shard,
-        total_deepvariant_tasks = total_deepvariant_tasks,
-        docker_image            = docker_image,
-        runtime_attributes      = default_runtime_attributes
+        sample_id                   = sample_id,
+        aligned_bams                = aligned_bams,
+        aligned_bam_indices         = aligned_bam_indices,
+        regions_bed                 = regions_bed,
+        proposed_variants_vcf       = proposed_variants_vcf,
+        proposed_variants_vcf_index = proposed_variants_vcf_index,
+        ref_fasta                   = ref_fasta,
+        ref_index                   = ref_index,
+        max_reads_per_partition     = max_reads_per_partition,
+        task_start_index            = task_start_index,
+        tasks_per_shard             = tasks_per_shard,
+        total_deepvariant_tasks     = total_deepvariant_tasks,
+        docker_image                = docker_image,
+        runtime_attributes          = default_runtime_attributes
     }
   }
 
@@ -146,6 +163,7 @@ workflow deepvariant {
       ref_index                     = ref_index,
       ref_name                      = ref_name,
       deepvariant_postprocess_variants_override_mem_gb = deepvariant_postprocess_variants_override_mem_gb,
+      exclude_uncalled_sites        = exclude_uncalled_sites,
       total_deepvariant_tasks       = total_deepvariant_tasks,
       docker_image                  = docker_image,
       runtime_attributes            = default_runtime_attributes
@@ -176,6 +194,14 @@ task deepvariant_make_examples {
     }
     regions_bed: {
       name: "Regions BED"
+    }
+    proposed_variants_vcf: {
+      name: "Proposed variants VCF",
+      help: "Tabix-indexed VCF of variants to genotype. When set, make_examples genotypes exactly these alleles (vcf_candidate_importer) instead of discovering candidates; GTs in the file are ignored. Only proposed variants inside regions_bed, when one is given, are genotyped; any outside it produce no output record"
+    }
+    proposed_variants_vcf_index: {
+      name: "Proposed variants VCF index",
+      help: "Tabix index for proposed_variants_vcf; required when proposed_variants_vcf is set"
     }
     ref_fasta: {
       name: "Reference FASTA"
@@ -215,6 +241,8 @@ task deepvariant_make_examples {
     Array[File] aligned_bams
     Array[File] aligned_bam_indices
     File? regions_bed
+    File? proposed_variants_vcf
+    File? proposed_variants_vcf_index
 
     File ref_fasta
     File ref_index
@@ -240,7 +268,8 @@ task deepvariant_make_examples {
 
     mkdir example_tfrecords nonvariant_site_tfrecords
 
-    echo "DeepVariant version: $VERSION"
+    : "${VERSION:?VERSION environment variable not set}"
+    echo "DeepVariant version: ${VERSION}"
 
     seq ~{task_start_index} ~{task_end_index} \
     | parallel \
@@ -262,6 +291,7 @@ task deepvariant_make_examples {
         --mode calling \
         --ref ~{ref_fasta} \
         ~{if defined(regions_bed) then "--regions " + regions_bed else ""} \
+        ~{if defined(proposed_variants_vcf) then "--variant_caller vcf_candidate_importer --proposed_variants " + proposed_variants_vcf else ""} \
         --reads ~{sep="," aligned_bams} \
         --examples example_tfrecords/~{sample_id}.examples.tfrecord@~{total_deepvariant_tasks}.gz \
         --gvcf nonvariant_site_tfrecords/~{sample_id}.gvcf.tfrecord@~{total_deepvariant_tasks}.gz \
@@ -356,8 +386,9 @@ task deepvariant_call_variants_cpu {
       DEEPVARIANT_MODEL="/opt/models/pacbio"
     fi
 
-    echo "DeepVariant version: $VERSION"
-    echo "DeepVariant model: $DEEPVARIANT_MODEL"
+    : "${VERSION:?VERSION environment variable not set}"
+    echo "DeepVariant version: ${VERSION}"
+    echo "DeepVariant model: ${DEEPVARIANT_MODEL}"
 
     /opt/deepvariant/bin/call_variants \
       --writer_threads ~{writer_threads} \
@@ -453,8 +484,9 @@ task deepvariant_call_variants_gpu {
       DEEPVARIANT_MODEL="/opt/models/pacbio"
     fi
 
-    echo "DeepVariant version: $VERSION"
-    echo "DeepVariant model: $DEEPVARIANT_MODEL"
+    : "${VERSION:?VERSION environment variable not set}"
+    echo "DeepVariant version: ${VERSION}"
+    echo "DeepVariant model: ${DEEPVARIANT_MODEL}"
 
     /opt/deepvariant/bin/call_variants \
       --writer_threads ~{writer_threads} \
@@ -519,6 +551,10 @@ task deepvariant_postprocess_variants {
     deepvariant_postprocess_variants_override_mem_gb: {
       name: "DeepVariant postprocess variants override mem GB"
     }
+    exclude_uncalled_sites: {
+      name: "Exclude uncalled sites",
+      help: "If true (default), drop records with no called genotype from the VCF after postprocess_variants. Set false to keep every record postprocess_variants writes, e.g. for forced genotyping, where a no-call at a requested site is itself the answer; the VCF is then written exactly as postprocess_variants produced it"
+    }
     total_deepvariant_tasks: {
       name: "Total DeepVariant tasks"
     }
@@ -552,6 +588,7 @@ task deepvariant_postprocess_variants {
     String ref_name
 
     Int? deepvariant_postprocess_variants_override_mem_gb
+    Boolean exclude_uncalled_sites = true
 
     Int total_deepvariant_tasks
     String docker_image
@@ -572,7 +609,8 @@ task deepvariant_postprocess_variants {
       tar --no-same-owner --gzip --extract --verbose --file "${nonvariant_site_tfrecord_tar}"
     done < ~{write_lines(nonvariant_site_tfrecord_tars)}
 
-    echo "DeepVariant version: $VERSION"
+    : "${VERSION:?VERSION environment variable not set}"
+    echo "DeepVariant version: ${VERSION}"
 
     /opt/deepvariant/bin/postprocess_variants \
       --cpus ~{threads} \
@@ -583,15 +621,17 @@ task deepvariant_postprocess_variants {
       --nonvariant_site_tfrecord_path "nonvariant_site_tfrecords/~{sample_id}.gvcf.tfrecord@~{total_deepvariant_tasks}.gz" \
       --gvcf_outfile ~{sample_id}.~{ref_name}.small_variants.g.vcf.gz
 
-    # Filter for only PASS variants
-    bcftools view \
-    ~{if threads > 1 then "--threads " + (threads - 1) else ""} \
-    --exclude-uncalled \
-    --output-type z \
-    --output-file ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz \
-    ~{sample_id}.~{ref_name}.small_variants.vcf.gz
+    if [[ "~{exclude_uncalled_sites}" == "true" ]]; then
+      # Drop records with no called genotype
+      bcftools view \
+      ~{if threads > 1 then "--threads " + (threads - 1) else ""} \
+      --exclude-uncalled \
+      --output-type z \
+      --output-file ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz \
+      ~{sample_id}.~{ref_name}.small_variants.vcf.gz
 
-    mv --verbose ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz ~{sample_id}.~{ref_name}.small_variants.vcf.gz
+      mv --verbose ~{sample_id}.~{ref_name}.small_variants.passing.vcf.gz ~{sample_id}.~{ref_name}.small_variants.vcf.gz
+    fi
     bcftools index --tbi --force \
       ~{if threads > 1 then "--threads " + (threads - 1) else ""} \
       ~{sample_id}.~{ref_name}.small_variants.vcf.gz
