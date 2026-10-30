@@ -103,7 +103,7 @@ workflow deepvariant {
   Int num_shards              = 8
   Int tasks_per_shard         = total_deepvariant_tasks / num_shards
 
-  String docker_image = (if (default_runtime_attributes.backend == "AWS-HealthOmics") then default_runtime_attributes.container_registry else "google") + "/deepvariant:~{deepvariant_version}"
+  String docker_image = (if (default_runtime_attributes.container_registry == "quay.io/pacbio") then "google" else default_runtime_attributes.container_registry) + "/deepvariant:~{deepvariant_version}"
 
   scatter (shard_index in range(num_shards)) {
     Int task_start_index = shard_index * tasks_per_shard
