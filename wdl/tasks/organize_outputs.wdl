@@ -7,7 +7,7 @@ task create_timestamp {
     RuntimeAttributes runtime_attributes
   }
 
-  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
+  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.2.0"
 
   command <<<
     set -euo pipefail
@@ -46,13 +46,15 @@ task organize_outputs {
     String output_bucket
     String backend
 
+    String path_style = "identifier_first"
+
     RuntimeAttributes runtime_attributes
   }
 
   Int disk_size = 20
 
   String workflow_version_semver = sub(workflow_version, "-.*$", "")
-  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
+  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.2.0"
 
   command <<<
     set -euo pipefail
@@ -69,7 +71,8 @@ task organize_outputs {
       -v "~{workflow_version_semver}" \
       -o "~{output_bucket}" \
       -j "~{identifier}.outputs.json" \
-      -p "~{identifier}.outputs"
+      -p "~{identifier}.outputs" \
+      -s "~{path_style}"
   >>>
 
   output {
@@ -104,13 +107,15 @@ task organize_per_sample_outputs {
     String output_bucket
     String backend
 
+    String path_style = "identifier_first"
+
     RuntimeAttributes runtime_attributes
   }
 
   Int disk_size = 20
 
   String workflow_version_semver = sub(workflow_version, "-.*$", "")
-  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.1.2"
+  String tools_docker_image = (if (runtime_attributes.container_registry == "quay.io/pacbio") then "dnastack/" else runtime_attributes.container_registry + "/") + "hifi_solves_tools:2.2.0"
 
   command <<<
     set -euo pipefail
@@ -132,7 +137,8 @@ task organize_per_sample_outputs {
       -v "~{workflow_version_semver}" \
       -o "~{output_bucket}" \
       -j "~{identifier}.outputs.json" \
-      -p "~{identifier}.outputs"
+      -p "~{identifier}.outputs" \
+      -s "~{path_style}"
   >>>
 
   output {
